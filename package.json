@@ -5,6 +5,8 @@
 	"main": "./src",
 	"dependencies": {
 		"axios": "^0.27.2",
+		"discord-api-types": "^0.36.0",
+		"dotenv": "^16.0.1",
 		"ws": "^8.8.0"
 	},
 	"scripts": {
