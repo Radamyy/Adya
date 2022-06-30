@@ -42,6 +42,8 @@ build/Release
 node_modules/
 jspm_packages/
 
+package-lock.json
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 
@@ -116,8 +118,9 @@ dist
 # TernJS port file
 .tern-port
 
-# Stores VSCode versions used for testing VSCode extensions
+# Stores VSCode versions used for testing VSCode extensions & JetBrains IDEA
 .vscode-test
+.idea/
 
 # yarn v2
 .yarn/cache
@@ -125,3 +128,5 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
