@@ -1,0 +1,40 @@
+{
+	"name": "adya",
+	"description": "Yet another giveaway bot, but better",
+	"version": "1.0.0",
+	"main": "./src",
+	"dependencies": {
+		"axios": "^0.27.2",
+		"ws": "^8.8.0"
+	},
+	"scripts": {
+		"dev": "nodemon .",
+		"start": "node ."
+	},
+	"devDependencies": {
+		"eslint": "^8.18.0",
+		"husky": "^8.0.1",
+		"lint-staged": "^13.0.3",
+		"nodemon": "^2.0.18",
+		"prettier": "^2.7.1"
+	},
+	"lint-staged": {
+		"*.js": "eslint ./src --cache --fix",
+		"*.{js,json}": "prettier ./src --write"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Radamyy/Adya.git"
+	},
+	"keywords": [
+		"Giveaway",
+		"Bot",
+		"Discord"
+	],
+	"author": "Expensiveee & Derp",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/Radamyy/Adya/issues"
+	},
+	"homepage": "https://github.com/Radamyy/Adya#readme"
+}
