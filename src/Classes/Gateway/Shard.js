@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 const { EventEmitter } = require('node:events');
-const { GatewayOpcodes } = require('discord-api-types/v10');
+const { GatewayOpcodes, GatewayDispatchEvents } = require('discord-api-types/v10');
 
 class Shard extends EventEmitter {
 	constructor(id, client) {
@@ -22,11 +22,7 @@ class Shard extends EventEmitter {
 
 	connect() {
 		if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
-			this.emit(
-				'error',
-				new Error('Existing connection detected'),
-				this.id
-			);
+			this.emit('error', new Error('Existing connection detected'), this.id);
 			return;
 		}
 		++this.connectAttempts;
@@ -47,7 +43,7 @@ class Shard extends EventEmitter {
 					{
 						reconnect: 'auto',
 					},
-					new Error('Connection timeout')
+					new Error('Connection timeout'),
 				);
 			}
 		}, this.connectionTimeout);
@@ -101,14 +97,44 @@ class Shard extends EventEmitter {
 		}
 	}
 
+	wsEvent({ d, t }) {
+		switch (t) {
+		case GatewayDispatchEvents.GuildCreate:
+			this.emit('guildCreate', d, this.id);
+			break;
+		case GatewayDispatchEvents.GuildUpdate:
+			this.emit('guildUpdate', d, this.id);
+			break;
+		case GatewayDispatchEvents.GuildDelete:
+			this.emit('guildDelete', d, this.id);
+			break;
+		case GatewayDispatchEvents.InteractionCreate:
+			this.emit('interactionCreate', d, this.id);
+			break;
+		case GatewayDispatchEvents.MessageCreate:
+			this.emit('messageCreate', d, this.id);
+			break;
+		case GatewayDispatchEvents.MessageReactionAdd:
+			this.emit('messageReactionAdd', d, this.id);
+			break;
+		case GatewayDispatchEvents.MessageReactionRemove:
+			this.emit('messageReactionRemove', d, this.id);
+			break;
+		case GatewayDispatchEvents.PresenceUpdate:
+			this.emit('presenceUpdate', d, this.id);
+			break;
+		case GatewayDispatchEvents.VoiceStateUpdate:
+			this.emit('voiceStateUpdate', d, this.id);
+			break;
+		default:
+			return null;
+		}
+	}
+
 	onPacket({ s, d, t, op }) {
 		if (s) {
 			if (s > this.seq + 1 && this.ws && this.status !== 'resuming') {
-				this.emit(
-					'warn',
-					`Non-consecutive sequence (${this.seq} -> ${s})`,
-					this.id
-				);
+				this.emit('warn', `Non-consecutive sequence (${this.seq} -> ${s})`, this.id);
 			}
 			this.seq = s;
 		}
@@ -129,11 +155,7 @@ class Shard extends EventEmitter {
 			break;
 		}
 		case GatewayOpcodes.Reconnect: {
-			this.emit(
-				'debug',
-				'Reconnecting due to server request',
-				this.id
-			);
+			this.emit('debug', 'Reconnecting due to server request', this.id);
 			this.disconnect({
 				reconnect: 'auto',
 			});
@@ -146,7 +168,7 @@ class Shard extends EventEmitter {
 				}
 				this.heartbeatInterval = setInterval(
 					() => this.heartbeat(true),
-					d.heartbeat_interval
+					d.heartbeat_interval,
 				);
 			}
 
@@ -171,8 +193,7 @@ class Shard extends EventEmitter {
 		case GatewayOpcodes.HeartbeatAck: {
 			this.lastHeartbeatAck = true;
 			this.lastHeartbeatReceived = Date.now();
-			this.latency =
-					this.lastHeartbeatReceived - this.lastHeartbeatSent;
+			this.latency = this.lastHeartbeatReceived - this.lastHeartbeatSent;
 			break;
 		}
 		default: {
@@ -198,15 +219,15 @@ class Shard extends EventEmitter {
 							interval: this.heartbeatInterval,
 							status: this.status,
 							timestamp: Date.now(),
-						})
+						}),
 				);
 				return this.disconnect(
 					{
 						reconnect: 'auto',
 					},
 					new Error(
-						'Server didn\'t acknowledge previous heartbeat, possible lost connection'
-					)
+						'Server didn\'t acknowledge previous heartbeat, possible lost connection',
+					),
 				);
 			}
 			this.lastHeartbeatAck = false;
@@ -247,7 +268,7 @@ class Shard extends EventEmitter {
 						this.emit(
 							'debug',
 							`Terminating websocket (state: ${this.ws.readyState})`,
-							this.id
+							this.id,
 						);
 						this.ws.terminate();
 					}
@@ -272,23 +293,21 @@ class Shard extends EventEmitter {
 				this.emit(
 					'debug',
 					`Immediately reconnecting for potential resume | Attempt ${this.connectAttempts}`,
-					this.id
+					this.id,
 				);
 				this._client.shards.connect(this);
 			} else {
 				this.emit(
 					'debug',
 					`Queueing reconnect in ${this.reconnectInterval}ms | Attempt ${this.connectAttempts}`,
-					this.id
+					this.id,
 				);
 				setTimeout(() => {
 					this._client.shards.connect(this);
 				}, this.reconnectInterval);
 				this.reconnectInterval = Math.min(
-					Math.round(
-						this.reconnectInterval * (Math.random() * 2 + 1)
-					),
-					30000
+					Math.round(this.reconnectInterval * (Math.random() * 2 + 1)),
+					30000,
 				);
 			}
 		} else if (!options.reconnect) {
@@ -314,18 +333,15 @@ class Shard extends EventEmitter {
 					code: code,
 					reason: reason,
 					status: this.status,
-				})
+				}),
 		);
-		let err =
-			!code || code === 1000 ? null : new Error(code + ': ' + reason);
+		let err = !code || code === 1000 ? null : new Error(code + ': ' + reason);
 		let reconnect = 'auto';
 		if (code) {
 			this.emit(
 				'debug',
-				`${
-					code === 1000 ? 'Clean' : 'Unclean'
-				} WS close: ${code}: ${reason}`,
-				this.id
+				`${code === 1000 ? 'Clean' : 'Unclean'} WS close: ${code}: ${reason}`,
+				this.id,
 			);
 			if (code === 4001) {
 				err = new Error('Gateway received invalid OP code');
@@ -380,7 +396,7 @@ class Shard extends EventEmitter {
 			{
 				reconnect,
 			},
-			err
+			err,
 		);
 	}
 

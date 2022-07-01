@@ -1,7 +1,6 @@
-const { Guilds, GuildMembers, MessageContent, GuildMessages } =
-	GatewayIntentBits;
-const { Client } = require('./Classes/Client');
 const { GatewayIntentBits } = require('discord-api-types/v10');
+const { Client } = require('./Classes/Client');
+const { Guilds, GuildMembers, MessageContent, GuildMessages } = GatewayIntentBits;
 const config = require('dotenv').config().parsed;
 
 const client = new Client({
