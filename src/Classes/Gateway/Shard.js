@@ -1,8 +1,9 @@
 const WebSocket = require('ws');
-const { EventEmitter } =require('node:events');
-const { GatewayOpcodes, GatewayIntentBits } = require('discord-api-types/v10');
-module.exports = class Shard extends EventEmitter {
-	constructor (id, client) {
+const { EventEmitter } = require('node:events');
+const { GatewayOpcodes } = require('discord-api-types/v10');
+
+class Shard extends EventEmitter {
+	constructor(id, client) {
 		super();
 		this.id = id;
 		this._client = client;
@@ -19,9 +20,13 @@ module.exports = class Shard extends EventEmitter {
 		this.hardReset();
 	}
 
-	connect () {
-		if(this.ws && this.ws.readyState !== WebSocket.CLOSED) {
-			this.emit('error', new Error('Existing connection detected'), this.id);
+	connect() {
+		if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+			this.emit(
+				'error',
+				new Error('Existing connection detected'),
+				this.id
+			);
 			return;
 		}
 		++this.connectAttempts;
@@ -29,7 +34,7 @@ module.exports = class Shard extends EventEmitter {
 		return this.initWs();
 	}
 
-	async initWs () {
+	async initWs() {
 		this.status = 'connecting';
 		this.ws = new WebSocket('wss://gateway.discord.gg/?v10@encoding=json');
 		this.ws.on('open', this.onOpen);
@@ -37,71 +42,77 @@ module.exports = class Shard extends EventEmitter {
 		this.ws.on('error', this.onError);
 		this.ws.on('close', this.onClose);
 		this.connectTimeout = setTimeout(() => {
-			if(this.connecting) {
-				this.disconnect({
-					reconnect: 'auto'
-				}, new Error('Connection timeout'));
+			if (this.connecting) {
+				this.disconnect(
+					{
+						reconnect: 'auto',
+					},
+					new Error('Connection timeout')
+				);
 			}
 		}, this.connectionTimeout);
 	}
 
-	identify () {
-
+	identify() {
 		this.status = 'identifying';
 		const identify = {
 			token: this._token,
 			v: 10,
 			compress: false,
 			large_threshold: 250,
-			intents: this._client.options.intents.reduce((a,b) =>  a | b, 0),
+			intents: this._client.options.intents.reduce((a, b) => a | b, 0),
 			properties: {
-				'os': process.platform,
-				'browser': 'Adya-core',
-				'device': 'Adya-core'
-			}
+				os: process.platform,
+				browser: 'Adya-core',
+				device: 'Adya-core',
+			},
 		};
 
 		identify.shard = [this.id, this._client.options.shardCount];
 
-		if(this._client.options.presence.status) {
+		if (this._client.options.presence.status) {
 			identify.presence = this._client.options.presence;
 		}
 		this.sendWS(GatewayOpcodes.Identify, identify);
 	}
 
-	handleMessage (data) {
+	handleMessage(data) {
 		try {
-			if(Array.isArray(data)) { // Fragmented messages
+			if (Array.isArray(data)) {
+				// Fragmented messages
 				data = Buffer.concat(data); // Copyfull concat is slow, but no alternative
 			}
 			return this.onPacket(JSON.parse(data.toString()));
-		} catch(err) {
+		} catch (err) {
 			this.emit('error', err, this.id);
 		}
 	}
 
-	onOpen () {
+	onOpen() {
 		this.status = 'handshaking';
 		this.emit('connect', this.id);
 		this.lastHeartbeatAck = true;
 	}
 
-	emit (event, ...args) {
+	emit(event, ...args) {
 		this._client.emit.call(this._client, event, ...args);
-		if(event !== 'error' || this.listeners('error').length > 0) {
+		if (event !== 'error' || this.listeners('error').length > 0) {
 			super.emit.call(this, event, ...args);
 		}
 	}
 
-	onPacket ({ s, d, t, op }) {
-		if(s) {
-			if(s > this.seq + 1 && this.ws && this.status !== 'resuming') {
-
-				this.emit('warn', `Non-consecutive sequence (${this.seq} -> ${s})`, this.id);
+	onPacket({ s, d, t, op }) {
+		if (s) {
+			if (s > this.seq + 1 && this.ws && this.status !== 'resuming') {
+				this.emit(
+					'warn',
+					`Non-consecutive sequence (${this.seq} -> ${s})`,
+					this.id
+				);
 			}
 			this.seq = s;
 		}
-		switch(op) {
+		switch (op) {
 		case GatewayOpcodes.Dispatch: {
 			this.wsEvent({ s, d, t, op });
 			break;
@@ -118,28 +129,35 @@ module.exports = class Shard extends EventEmitter {
 			break;
 		}
 		case GatewayOpcodes.Reconnect: {
-			this.emit('debug', 'Reconnecting due to server request', this.id);
+			this.emit(
+				'debug',
+				'Reconnecting due to server request',
+				this.id
+			);
 			this.disconnect({
-				reconnect: 'auto'
+				reconnect: 'auto',
 			});
 			break;
 		}
 		case GatewayOpcodes.Hello: {
-			if(d.heartbeat_interval > 0) {
-				if(this.heartbeatInterval) {
+			if (d.heartbeat_interval > 0) {
+				if (this.heartbeatInterval) {
 					clearInterval(this.heartbeatInterval);
 				}
-				this.heartbeatInterval = setInterval(() => this.heartbeat(true), d.heartbeat_interval);
+				this.heartbeatInterval = setInterval(
+					() => this.heartbeat(true),
+					d.heartbeat_interval
+				);
 			}
 
 			this.discordServerTrace = d._trace;
 			this.connecting = false;
-			if(this.connectTimeout) {
+			if (this.connectTimeout) {
 				clearTimeout(this.connectTimeout);
 			}
 			this.connectTimeout = null;
 
-			if(this.sessionID) {
+			if (this.sessionID) {
 				this.resume();
 			} else {
 				this.identify();
@@ -153,7 +171,8 @@ module.exports = class Shard extends EventEmitter {
 		case GatewayOpcodes.HeartbeatAck: {
 			this.lastHeartbeatAck = true;
 			this.lastHeartbeatReceived = Date.now();
-			this.latency = this.lastHeartbeatReceived - this.lastHeartbeatSent;
+			this.latency =
+					this.lastHeartbeatReceived - this.lastHeartbeatSent;
 			break;
 		}
 		default: {
@@ -163,23 +182,32 @@ module.exports = class Shard extends EventEmitter {
 		}
 	}
 
-	heartbeat (normal) {
+	heartbeat(normal) {
 		// Can only heartbeat after identify/resume succeeds, session will be killed otherwise, discord/discord-api-docs#1619
-		if(this.status === 'resuming' || this.status === 'identifying') {
+		if (this.status === 'resuming' || this.status === 'identifying') {
 			return;
 		}
-		if(normal) {
-			if(!this.lastHeartbeatAck) {
-				this.emit('debug', 'Heartbeat timeout; ' + JSON.stringify({
-					lastReceived: this.lastHeartbeatReceived,
-					lastSent: this.lastHeartbeatSent,
-					interval: this.heartbeatInterval,
-					status: this.status,
-					timestamp: Date.now()
-				}));
-				return this.disconnect({
-					reconnect: 'auto'
-				}, new Error('Server didn\'t acknowledge previous heartbeat, possible lost connection'));
+		if (normal) {
+			if (!this.lastHeartbeatAck) {
+				this.emit(
+					'debug',
+					'Heartbeat timeout; ' +
+						JSON.stringify({
+							lastReceived: this.lastHeartbeatReceived,
+							lastSent: this.lastHeartbeatSent,
+							interval: this.heartbeatInterval,
+							status: this.status,
+							timestamp: Date.now(),
+						})
+				);
+				return this.disconnect(
+					{
+						reconnect: 'auto',
+					},
+					new Error(
+						'Server didn\'t acknowledge previous heartbeat, possible lost connection'
+					)
+				);
 			}
 			this.lastHeartbeatAck = false;
 		}
@@ -187,156 +215,180 @@ module.exports = class Shard extends EventEmitter {
 		this.sendWS(GatewayOpcodes.Heartbeat, this.seq, true);
 	}
 
-	sendWS (op, _data) {
-		if(this.ws && this.ws.readyState === WebSocket.OPEN) {
+	sendWS(op, _data) {
+		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
 			const data = JSON.stringify({ op: op, d: _data });
 			this.ws.send(data);
-			if(_data.token) {
+			if (_data.token) {
 				delete _data.token;
 			}
 			this.emit('debug', JSON.stringify({ op: op, d: _data }), this.id);
 		}
 	}
 
-	disconnect (options = {}, error) {
-		if(!this.ws) {
+	disconnect(options = {}, error) {
+		if (!this.ws) {
 			return;
 		}
 
-		if(this.heartbeatInterval) {
+		if (this.heartbeatInterval) {
 			clearInterval(this.heartbeatInterval);
 			this.heartbeatInterval = null;
 		}
 
-		if(this.ws.readyState !== WebSocket.CLOSED) {
+		if (this.ws.readyState !== WebSocket.CLOSED) {
 			this.ws.removeListener('message', this.handleMessage);
 			this.ws.removeListener('close', this.onClose);
 			try {
-				if(options.reconnect && this.sessionID) {
-					if(this.ws.readyState === WebSocket.OPEN) {
+				if (options.reconnect && this.sessionID) {
+					if (this.ws.readyState === WebSocket.OPEN) {
 						this.ws.close(4901, 'Adya-core: reconnect');
 					} else {
-						this.emit('debug', `Terminating websocket (state: ${this.ws.readyState})`, this.id);
+						this.emit(
+							'debug',
+							`Terminating websocket (state: ${this.ws.readyState})`,
+							this.id
+						);
 						this.ws.terminate();
 					}
 				} else {
 					this.ws.close(1000, 'Adya-core: normal');
 				}
-			} catch(err) {
+			} catch (err) {
 				this.emit('error', err, this.id);
 			}
 		}
 		this.ws = null;
 		this.reset();
 
-		if(error) {
+		if (error) {
 			this.emit('error', error, this.id);
 		}
 
 		super.emit('disconnect', error);
 
-
-
-		if(options.reconnect === 'auto') {
-			if(this.sessionID) {
-				this.emit('debug', `Immediately reconnecting for potential resume | Attempt ${this.connectAttempts}`, this.id);
+		if (options.reconnect === 'auto') {
+			if (this.sessionID) {
+				this.emit(
+					'debug',
+					`Immediately reconnecting for potential resume | Attempt ${this.connectAttempts}`,
+					this.id
+				);
 				this._client.shards.connect(this);
 			} else {
-				this.emit('debug', `Queueing reconnect in ${this.reconnectInterval}ms | Attempt ${this.connectAttempts}`, this.id);
+				this.emit(
+					'debug',
+					`Queueing reconnect in ${this.reconnectInterval}ms | Attempt ${this.connectAttempts}`,
+					this.id
+				);
 				setTimeout(() => {
 					this._client.shards.connect(this);
 				}, this.reconnectInterval);
-				this.reconnectInterval = Math.min(Math.round(this.reconnectInterval * (Math.random() * 2 + 1)), 30000);
+				this.reconnectInterval = Math.min(
+					Math.round(
+						this.reconnectInterval * (Math.random() * 2 + 1)
+					),
+					30000
+				);
 			}
-		} else if(!options.reconnect) {
+		} else if (!options.reconnect) {
 			this.hardReset();
 		}
 	}
 
-	resume () {
+	resume() {
 		this.status = 'resuming';
 		this.sendWS(GatewayOpcodes.Resume, {
 			token: this._token,
 			session_id: this.sessionID,
-			seq: this.seq
+			seq: this.seq,
 		});
 	}
 
-	wsEvent ({ s, d, t }) {
-
-	}
-
-	onClose (code, reason) {
+	onClose(code, reason) {
 		reason = reason.toString();
-		this.emit('debug', 'WS disconnected: ' + JSON.stringify({
-			code: code,
-			reason: reason,
-			status: this.status
-		}));
-		let err = !code || code === 1000 ? null : new Error(code + ': ' + reason);
+		this.emit(
+			'debug',
+			'WS disconnected: ' +
+				JSON.stringify({
+					code: code,
+					reason: reason,
+					status: this.status,
+				})
+		);
+		let err =
+			!code || code === 1000 ? null : new Error(code + ': ' + reason);
 		let reconnect = 'auto';
-		if(code) {
-			this.emit('debug', `${code === 1000 ? 'Clean' : 'Unclean'} WS close: ${code}: ${reason}`, this.id);
-			if(code === 4001) {
+		if (code) {
+			this.emit(
+				'debug',
+				`${
+					code === 1000 ? 'Clean' : 'Unclean'
+				} WS close: ${code}: ${reason}`,
+				this.id
+			);
+			if (code === 4001) {
 				err = new Error('Gateway received invalid OP code');
-			} else if(code === 4002) {
+			} else if (code === 4002) {
 				err = new Error('Gateway received invalid message');
-			} else if(code === 4003) {
+			} else if (code === 4003) {
 				err = new Error('Not authenticated');
 				this.sessionID = null;
-			} else if(code === 4004) {
+			} else if (code === 4004) {
 				err = new Error('Authentication failed');
 				this.sessionID = null;
 				reconnect = false;
 				this.emit('error', new Error(`Invalid token: ${this._token}`));
-			} else if(code === 4005) {
+			} else if (code === 4005) {
 				err = new Error('Already authenticated');
-			} else if(code === 4006 || code === 4009) {
+			} else if (code === 4006 || code === 4009) {
 				err = new Error('Invalid session');
 				this.sessionID = null;
-			} else if(code === 4007) {
+			} else if (code === 4007) {
 				err = new Error('Invalid sequence number: ' + this.seq);
 				this.seq = 0;
-			} else if(code === 4008) {
+			} else if (code === 4008) {
 				err = new Error('Gateway connection was ratelimited');
-			} else if(code === 4010) {
+			} else if (code === 4010) {
 				err = new Error('Invalid shard key');
 				this.sessionID = null;
 				reconnect = false;
-			} else if(code === 4011) {
+			} else if (code === 4011) {
 				err = new Error('Shard has too many guilds (>2500)');
 				this.sessionID = null;
 				reconnect = false;
-			} else if(code === 4013) {
+			} else if (code === 4013) {
 				err = new Error('Invalid intents specified');
 				this.sessionID = null;
 				reconnect = false;
-			} else if(code === 4014) {
+			} else if (code === 4014) {
 				err = new Error('Disallowed intents specified');
 				this.sessionID = null;
 				reconnect = false;
-			} else if(code === 1006) {
+			} else if (code === 1006) {
 				err = new Error('Connection reset by peer');
-			} else if(code !== 1000 && reason) {
+			} else if (code !== 1000 && reason) {
 				err = new Error(code + ': ' + reason);
 			}
-			if(err) {
+			if (err) {
 				err.code = code;
 			}
 		} else {
 			this.emit('debug', 'WS close: unknown code: ' + reason, this.id);
 		}
-		this.disconnect({
-			reconnect
-		}, err);
-
+		this.disconnect(
+			{
+				reconnect,
+			},
+			err
+		);
 	}
 
-	onError (err) {
+	onError(err) {
 		this.emit('error', err, this.id);
 	}
 
-	reset () {
+	reset() {
 		this.connecting = false;
 		this.ready = false;
 		this.preReady = false;
@@ -350,7 +402,7 @@ module.exports = class Shard extends EventEmitter {
 		}
 	}
 
-	hardReset () {
+	hardReset() {
 		this.reset();
 		this.seq = 0;
 		this.sessionID = null;
@@ -362,10 +414,9 @@ module.exports = class Shard extends EventEmitter {
 			configurable: true,
 			enumerable: false,
 			writable: true,
-			value: this._client._token
+			value: this._client._token,
 		});
 	}
+}
 
-
-
-};
+module.exports = { Shard };
