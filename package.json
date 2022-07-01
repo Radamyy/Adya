@@ -11,18 +11,12 @@
 	},
 	"scripts": {
 		"dev": "nodemon .",
-		"start": "node ."
+		"start": "node .",
+		"lint": "eslint ./src --fix"
 	},
 	"devDependencies": {
 		"eslint": "^8.18.0",
-		"husky": "^8.0.1",
-		"lint-staged": "^13.0.3",
-		"nodemon": "^2.0.18",
-		"prettier": "^2.7.1"
-	},
-	"lint-staged": {
-		"*.js": "eslint ./src --cache --fix",
-		"*.{js,json}": "prettier ./src --write"
+		"nodemon": "^2.0.18"
 	},
 	"repository": {
 		"type": "git",

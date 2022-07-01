@@ -27,7 +27,7 @@ class Client extends EventEmitter {
 			}
 			const reconnectDelay = this.options.reconnectDelay(
 				this.lastReconnectDelay,
-				this.reconnectAttempts,
+				this.reconnectAttempts
 			);
 			await sleep(reconnectDelay);
 			this.lastReconnectDelay = reconnectDelay;
@@ -41,17 +41,14 @@ class Client extends EventEmitter {
 	}
 
 	async deleteMessage(channelId, messageId) {
-		return await this.rest.request(
-			'DELETE',
-			Routes.channelMessage(channelId, messageId),
-		);
+		return await this.rest.request('DELETE', Routes.channelMessage(channelId, messageId));
 	}
 
 	async editMessage(channelId, messageId, message) {
 		return await this.rest.request(
 			'PATCH',
 			Routes.channelMessage(channelId, messageId),
-			message,
+			message
 		);
 	}
 }
