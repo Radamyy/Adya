@@ -21,48 +21,6 @@ class ShardManager extends Map {
 		let shard = this.get(id);
 		if (!shard) {
 			shard = this.add(new Shard(id, this._client));
-			shard
-				.on('ready', () => {
-					this._client.emit('shardReady', shard.id);
-					if (this._client.ready) {
-						return;
-					}
-					for (const other of this.values()) {
-						if (!other.ready) {
-							return;
-						}
-					}
-					this._client.ready = true;
-					this._client.startTime = Date.now();
-
-					this._client.emit('ready');
-				})
-				.on('resume', () => {
-					this._client.emit('shardResume', shard.id);
-					if (this._client.ready) {
-						return;
-					}
-					for (const other of this.values()) {
-						if (!other.ready) {
-							return;
-						}
-					}
-					this._client.ready = true;
-					this._client.startTime = Date.now();
-					this._client.emit('ready');
-				})
-				.on('disconnect', (error) => {
-					this._client.emit('shardDisconnect', error, shard.id);
-					for (const other of this.values()) {
-						if (other.ready) {
-							return;
-						}
-					}
-					this._client.ready = false;
-					this._client.startTime = 0;
-
-					this._client.emit('disconnect');
-				});
 		}
 		if (shard.status === 'disconnected') {
 			return this.connect(shard);
