@@ -6,10 +6,13 @@ class ShardManager extends Map {
 		this._client = client;
 		this.connectQueue = [];
 		this.connectTimeout = null;
+		this.shardsReady = new Map();
 	}
 
 	add(shard) {
 		this.set(this.values().length ? this.values().length + 1 : 0, shard);
+		this.shardsReady.set(shard.id, false);
+
 		return shard;
 	}
 	connect(shard) {
@@ -19,9 +22,26 @@ class ShardManager extends Map {
 
 	spawn(id) {
 		let shard = this.get(id);
+
 		if (!shard) {
 			shard = this.add(new Shard(id, this._client));
+
+			shard.on('shardReady', () => {
+				this.shardsReady.set(shard.id, true);
+
+				if (this._client.ready) return;
+
+				for (const shardReady of this.shardsReady.entries()) {
+					if (shardReady[1] == false) return;
+				}
+
+				this._client.ready = true;
+				this._client.startTime = Date.now();
+
+				this._client.emit('ready');
+			});
 		}
+
 		if (shard.status === 'disconnected') {
 			return this.connect(shard);
 		}

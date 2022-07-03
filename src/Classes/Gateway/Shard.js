@@ -99,6 +99,9 @@ class Shard extends EventEmitter {
 
 	wsEvent({ d, t }) {
 		switch (t) {
+		case GatewayDispatchEvents.Ready:
+			this.emit('shardReady', this.id, d._trace);
+			break;
 		case GatewayDispatchEvents.GuildCreate:
 			this.emit('guildCreate', d, this.id);
 			break;
@@ -186,8 +189,6 @@ class Shard extends EventEmitter {
 				// Cannot heartbeat when resuming, discord/discord-api-docs#1619
 				this.heartbeat();
 			}
-
-			this.emit('hello', d._trace, this.id);
 			break;
 		}
 		case GatewayOpcodes.HeartbeatAck: {

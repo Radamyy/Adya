@@ -8,6 +8,7 @@ const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 class Client extends EventEmitter {
 	constructor(options) {
 		super();
+		this.ready = false;
 		this.options = options;
 		this._token = options.token;
 		this.options.reconnectDelay = (lastDelay, attempts) =>

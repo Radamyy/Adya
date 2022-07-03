@@ -24,3 +24,6 @@ const client = new Client({
 });
 
 client.login();
+
+client.on('shardReady', (id) => console.log(`[SHARD] Shard(${id}) is now ready`));
+client.on('ready', () => console.log('[CLIENT] The bot is online'));
