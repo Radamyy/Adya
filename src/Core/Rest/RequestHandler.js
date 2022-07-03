@@ -2,7 +2,7 @@ const { RouteBases } = require('discord-api-types/v10');
 
 const axios = require('axios').default;
 
-class Rest {
+module.exports = class RequestHandler {
 	constructor(token) {
 		this.token = token;
 		this.axios = axios.create({
@@ -21,6 +21,4 @@ class Rest {
 			headers,
 		});
 	}
-}
-
-module.exports = { Rest };
+};

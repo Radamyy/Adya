@@ -1,6 +1,6 @@
-const { Shard } = require('./Shard');
+const Shard = require('./Shard');
 
-class ShardManager extends Map {
+module.exports = class ShardManager extends Map {
 	constructor(client) {
 		super();
 		this._client = client;
@@ -93,6 +93,6 @@ class ShardManager extends Map {
 			}, 500);
 		}
 	}
-}
+};
 
-module.exports = { ShardManager };
+

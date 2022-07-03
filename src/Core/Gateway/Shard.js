@@ -2,21 +2,25 @@ const WebSocket = require('ws');
 const { EventEmitter } = require('node:events');
 const { GatewayOpcodes, GatewayDispatchEvents } = require('discord-api-types/v10');
 
-class Shard extends EventEmitter {
+module.exports = class Shard extends EventEmitter {
 	constructor(id, client) {
 		super();
 		this.id = id;
 		this._client = client;
 		this.connectionTimeout = 3e5;
 		this.status = 'disconnected';
+		this.preReady = false;
 		this.heartbeatInterval = 0;
+
+		this.unavailableGuilds = [];
+
 
 		this.onOpen = this.onOpen.bind(this);
 		this.handleMessage = this.handleMessage.bind(this);
 		this.onClose = this.onClose.bind(this);
 		this.onError = this.onError.bind(this);
 		this.onPacket = this.onPacket.bind(this);
-
+		
 		this.hardReset();
 	}
 
@@ -98,8 +102,15 @@ class Shard extends EventEmitter {
 	}
 
 	wsEvent({ d, t }) {
+		if (!this._client.options.events.includes(t)) return;
 		switch (t) {
+		case GatewayDispatchEvents.Ready:
+			this.preReady = true;
+			this.unavailableGuilds = d.guilds.filter(g => g.unavailable === true).map(g => g.id);
+			this.emit('shardPreReady', this.id, d._trace);
+			break;
 		case GatewayDispatchEvents.GuildCreate:
+			this.cacheGuild(d);
 			this.emit('guildCreate', d, this.id);
 			break;
 		case GatewayDispatchEvents.GuildUpdate:
@@ -131,7 +142,16 @@ class Shard extends EventEmitter {
 		}
 	}
 
+	checkReady () {
+		if (!this.unavailableGuilds.length) {
+			this.status = 'ready';
+			this.emit('ready', this.id);
+		}
+
+	}
+
 	onPacket({ s, d, t, op }) {
+		console.log(t, op);
 		if (s) {
 			if (s > this.seq + 1 && this.ws && this.status !== 'resuming') {
 				this.emit('warn', `Non-consecutive sequence (${this.seq} -> ${s})`, this.id);
@@ -245,6 +265,12 @@ class Shard extends EventEmitter {
 			}
 			this.emit('debug', JSON.stringify({ op: op, d: _data }), this.id);
 		}
+	}
+
+	cacheGuild(guild) {
+		this._client.guilds.add(guild, this._client, true);
+		this.unavailableGuilds = this.unavailableGuilds.filter(g => g!== guild.id);
+		this.checkReady();
 	}
 
 	disconnect(options = {}, error) {
@@ -408,7 +434,7 @@ class Shard extends EventEmitter {
 		this.connecting = false;
 		this.ready = false;
 		this.preReady = false;
-		this.latency = Infinity;
+		this.unavailableGuilds = [];
 		this.lastHeartbeatAck = true;
 		this.lastHeartbeatReceived = null;
 		this.lastHeartbeatSent = null;
@@ -433,6 +459,4 @@ class Shard extends EventEmitter {
 			value: this._client._token,
 		});
 	}
-}
-
-module.exports = { Shard };
+};
