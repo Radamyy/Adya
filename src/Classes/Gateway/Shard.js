@@ -101,70 +101,72 @@ class Shard extends EventEmitter {
 
 	wsEvent({ d, t }) {
 		switch (t) {
-			case GatewayDispatchEvents.Ready:
-				//Here, I'm adding all the guild Ids to "guildsQueue" that need to be checked after in the "guildCreate" event
-				const guilds = d.guilds;
+		case GatewayDispatchEvents.Ready:
+			//Here, I'm adding all the guild Ids to "guildsQueue" that need to be checked after in the "guildCreate" event
+			const guilds = d.guilds;
 
-				guilds.map((guild) => this.guildsQueue.push(guild.id));
-				break;
-			case GatewayDispatchEvents.GuildCreate:
-				this.emit('guildCreate', d, this.id);
+			guilds.map((guild) => this.guildsQueue.push(guild.id));
+			break;
+		case GatewayDispatchEvents.GuildCreate:
+			this.emit('guildCreate', d, this.id);
 
-				const id = d.id;
+			const id = d.id;
 
-				/**
-			What we're doing here is simple, we loop through "guildsQueue" to check if the actual guildId of the event (d.id) is in the array.
-			If it is, we are deleting it from the queue, and if the guildsQueue.length == 0, that means that the shard has loaded and cached all the guilds and is now ready.
-			If the guildsQueue.length != 0, thats means that all the guilds of the shards haven't been loaded.
-			Simple right?
-		*/
+			/**
+				What we're doing here is simple, we loop through "guildsQueue" to check if the actual guildId of the event (d.id) is in the array.
+				If it is, we are deleting it from the queue, and if the guildsQueue.length == 0, that means that the shard has loaded and cached all the guilds and is now ready.
+				If the guildsQueue.length != 0, thats means that all the guilds of the shards haven't been loaded.
+				Simple right?
+			**/
 
-				//If nothing in the queue, we  do nothing
-				//This is useful because sometimes, the bot may be invited after all the shards are online
-				//And the bot joining a server triggers a guildCreate event, and we don't want to emit the shardReady we it gets invited, because the shard is ALREADY ready (in theory)
-				if (this.guildsQueue.length == 0) return;
+			/**
+				If nothing in the queue, we  do nothing
+				This is useful because sometimes, the bot may be invited after all the shards are online
+				And the bot joining a server triggers a guildCreate event, and we don't want to emit the shardReady we it gets invited, because the shard is ALREADY ready (in theory)
+			**/
+			if (this.guildsQueue.length == 0) return;
 
-				for (let i = 0; i < this.guildsQueue.length; i++) {
-					//If the id is equal to one id in guildsQueue, that means that it's the first time the server is getting loaded by the shard
-					if (this.guildsQueue[i] == id) {
-						//Now that we know that guild is loaded, we need to remove its id from the queue.
-						const index = this.guildsQueue.indexOf(id);
-						this.guildsQueue.splice(index, 1);
-					}
+			for (let i = 0; i < this.guildsQueue.length; i++) {
+				//If the id is equal to one id in guildsQueue, that means that it's the first time the server is getting loaded by the shard
+				if (this.guildsQueue[i] == id) {
+					//Now that we know that guild is loaded, we need to remove its id from the queue.
+					const index = this.guildsQueue.indexOf(id);
+					this.guildsQueue.splice(index, 1);
 				}
+			}
 
-				//If after removing an id the queue is still full, we return, if it's empty that means that the guilds are now loaded and the shard truely ready!
-				if (this.guildsQueue.length != 0) return;
+			//If after removing an id the queue is still full, we return, if it's empty that means that the guilds are now loaded and the shard truely ready!
+			if (this.guildsQueue.length != 0) return;
 
-				this.emit('shardReady', this.id);
+			this.emit('shardReady', this.id);
 
-				break;
-			case GatewayDispatchEvents.GuildUpdate:
-				this.emit('guildUpdate', d, this.id);
-				break;
-			case GatewayDispatchEvents.GuildDelete:
-				this.emit('guildDelete', d, this.id);
-				break;
-			case GatewayDispatchEvents.InteractionCreate:
-				this.emit('interactionCreate', d, this.id);
-				break;
-			case GatewayDispatchEvents.MessageCreate:
-				this.emit('messageCreate', d, this.id);
-				break;
-			case GatewayDispatchEvents.MessageReactionAdd:
-				this.emit('messageReactionAdd', d, this.id);
-				break;
-			case GatewayDispatchEvents.MessageReactionRemove:
-				this.emit('messageReactionRemove', d, this.id);
-				break;
-			case GatewayDispatchEvents.PresenceUpdate:
-				this.emit('presenceUpdate', d, this.id);
-				break;
-			case GatewayDispatchEvents.VoiceStateUpdate:
-				this.emit('voiceStateUpdate', d, this.id);
-				break;
-			default:
-				return null;
+			break;
+		case GatewayDispatchEvents.GuildUpdate:
+			this.emit('guildUpdate', d, this.id);
+			break;
+		case GatewayDispatchEvents.GuildDelete:
+			this.emit('guildDelete', d, this.id);
+			break;
+		case GatewayDispatchEvents.InteractionCreate:
+			this.emit('interactionCreate', d, this.id);
+			break;
+		case GatewayDispatchEvents.MessageCreate:
+			this.emit('messageCreate', d, this.id);
+			break;
+		case GatewayDispatchEvents.MessageReactionAdd:
+			this.emit('messageReactionAdd', d, this.id);
+			break;
+		case GatewayDispatchEvents.MessageReactionRemove:
+			this.emit('messageReactionRemove', d, this.id);
+			break;
+		case GatewayDispatchEvents.PresenceUpdate:
+			this.emit('presenceUpdate', d, this.id);
+			break;
+		case GatewayDispatchEvents.VoiceStateUpdate:
+			this.emit('voiceStateUpdate', d, this.id);
+			break;
+		default:
+			return null;
 		}
 	}
 
@@ -176,65 +178,65 @@ class Shard extends EventEmitter {
 			this.seq = s;
 		}
 		switch (op) {
-			case GatewayOpcodes.Dispatch: {
-				this.wsEvent({ s, d, t, op });
-				break;
+		case GatewayOpcodes.Dispatch: {
+			this.wsEvent({ s, d, t, op });
+			break;
+		}
+		case GatewayOpcodes.Heartbeat: {
+			this.heartbeat();
+			break;
+		}
+		case GatewayOpcodes.InvalidSession: {
+			this.seq = 0;
+			this.sessionID = null;
+			this.emit('warn', 'Invalid session, reidentifying!', this.id);
+			this.identify();
+			break;
+		}
+		case GatewayOpcodes.Reconnect: {
+			this.emit('debug', 'Reconnecting due to server request', this.id);
+			this.disconnect({
+				reconnect: 'auto',
+			});
+			break;
+		}
+		case GatewayOpcodes.Hello: {
+			if (d.heartbeat_interval > 0) {
+				if (this.heartbeatInterval) {
+					clearInterval(this.heartbeatInterval);
+				}
+				this.heartbeatInterval = setInterval(
+					() => this.heartbeat(true),
+					d.heartbeat_interval
+				);
 			}
-			case GatewayOpcodes.Heartbeat: {
-				this.heartbeat();
-				break;
+
+			this.discordServerTrace = d._trace;
+			this.connecting = false;
+			if (this.connectTimeout) {
+				clearTimeout(this.connectTimeout);
 			}
-			case GatewayOpcodes.InvalidSession: {
-				this.seq = 0;
-				this.sessionID = null;
-				this.emit('warn', 'Invalid session, reidentifying!', this.id);
+			this.connectTimeout = null;
+
+			if (this.sessionID) {
+				this.resume();
+			} else {
 				this.identify();
-				break;
+				// Cannot heartbeat when resuming, discord/discord-api-docs#1619
+				this.heartbeat();
 			}
-			case GatewayOpcodes.Reconnect: {
-				this.emit('debug', 'Reconnecting due to server request', this.id);
-				this.disconnect({
-					reconnect: 'auto',
-				});
-				break;
-			}
-			case GatewayOpcodes.Hello: {
-				if (d.heartbeat_interval > 0) {
-					if (this.heartbeatInterval) {
-						clearInterval(this.heartbeatInterval);
-					}
-					this.heartbeatInterval = setInterval(
-						() => this.heartbeat(true),
-						d.heartbeat_interval
-					);
-				}
-
-				this.discordServerTrace = d._trace;
-				this.connecting = false;
-				if (this.connectTimeout) {
-					clearTimeout(this.connectTimeout);
-				}
-				this.connectTimeout = null;
-
-				if (this.sessionID) {
-					this.resume();
-				} else {
-					this.identify();
-					// Cannot heartbeat when resuming, discord/discord-api-docs#1619
-					this.heartbeat();
-				}
-				break;
-			}
-			case GatewayOpcodes.HeartbeatAck: {
-				this.lastHeartbeatAck = true;
-				this.lastHeartbeatReceived = Date.now();
-				this.latency = this.lastHeartbeatReceived - this.lastHeartbeatSent;
-				break;
-			}
-			default: {
-				this.emit('unknown', { s, d, t, op }, this.id);
-				break;
-			}
+			break;
+		}
+		case GatewayOpcodes.HeartbeatAck: {
+			this.lastHeartbeatAck = true;
+			this.lastHeartbeatReceived = Date.now();
+			this.latency = this.lastHeartbeatReceived - this.lastHeartbeatSent;
+			break;
+		}
+		default: {
+			this.emit('unknown', { s, d, t, op }, this.id);
+			break;
+		}
 		}
 	}
 
@@ -261,7 +263,7 @@ class Shard extends EventEmitter {
 						reconnect: 'auto',
 					},
 					new Error(
-						"Server didn't acknowledge previous heartbeat, possible lost connection"
+						'Server didn\'t acknowledge previous heartbeat, possible lost connection'
 					)
 				);
 			}
