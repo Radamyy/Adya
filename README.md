@@ -12,14 +12,14 @@
 >>- [ ] Queue
 >>- [X] Sharding
 >>- [ ] Events Handling
->>- [ ] Caching (Guilds, Channels)
+>>- [X] Caching (Guilds, Channels)
 >>- [ ] Fix bugs & write cleaner code
 >></details>
 
 ><details open>
 ><summary>Core-REST</summary>
 >
->>- [ ] Request Handler
+>>- [X] Request Handler
 >>- [ ] RateLimits Manager
 >></details>
 
@@ -32,4 +32,4 @@
 
 Credits:
 
-> Sharding system is inspired by https://github.com/abalabahaha/eris
+> Sharding & Caching system is inspired by https://github.com/abalabahaha/eris
