@@ -10,6 +10,7 @@ const client = new Client({
 	lastShardId: 1,
 	shardCount: 2,
 	autoreconnect: true,
+	/*
 	presence: {
 		activities: [
 			{
@@ -21,6 +22,8 @@ const client = new Client({
 		since: 91879201,
 		afk: false,
 	},
+
+	 */
 	intents: [Guilds,
 		GuildMembers,
 		MessageContent,
@@ -45,9 +48,24 @@ client.login();
 client.on('ready', () => {
 	console.log(`Load total of ${client.guilds.size} guilds in cache`);
 
+	client.setActivity({
+		activities: [
+			{
+				name: 'Adya-core',
+				type: 0,
+			},
+		],
+		status: 'dnd',
+		since: 91879201,
+		afk: false,
+	}, [0, 1]).catch(console.error);
+
+	/*
 	client.createMessage('992905327039234128', {
 		content: 'bip bop'
-	}).catch(console.error);
+	}).catch(console.error);//.then(console.log);
+
+	 */
 
 
 });

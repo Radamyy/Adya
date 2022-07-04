@@ -71,7 +71,8 @@ module.exports = class Shard extends EventEmitter {
 
 		identify.shard = [this.id, this._client.options.shardCount];
 
-		if (this._client.options.presence.status) {
+
+		if ( this._client.options.presence && this._client.options.presence.status) {
 			identify.presence = this._client.options.presence;
 		}
 		this.sendWS(GatewayOpcodes.Identify, identify);
@@ -87,6 +88,10 @@ module.exports = class Shard extends EventEmitter {
 		} catch (err) {
 			this.emit('error', err, this.id);
 		}
+	}
+
+	setActivity (activity) {
+		this.sendWS(GatewayOpcodes.PresenceUpdate, activity);
 	}
 
 	onOpen() {

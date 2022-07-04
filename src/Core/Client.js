@@ -22,7 +22,7 @@ class Client extends EventEmitter {
 	async login() {
 		try {
 			const gateway = await this.getGateway();
-			console.log(gateway);
+			//console.log(gateway);
 			if (!this.options.shardCount) this.options.shardCount = gateway.shards;
 			if (!this.options.firstShardId) this.options.firstShardId = 0;
 			if (!this.options.lastShardId) this.options.lastShardId = gateway.shards-1;
@@ -68,6 +68,16 @@ class Client extends EventEmitter {
 			message
 		);
 	}
+
+
+	async setActivity (activity, shards) {
+		if (!shards ) shards = this.shards.map((shard) => shard.id);
+		for (const id of shards) {
+			await this.shards.get(id).setActivity(activity);
+		}
+	}
+
+
 }
 
 module.exports = { Client };
