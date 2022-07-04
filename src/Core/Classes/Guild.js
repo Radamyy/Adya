@@ -4,6 +4,7 @@ module.exports = class Guild {
 	constructor (apiGuild, client) {
 		this._client = client;
 		this.id = apiGuild.id;
+		this.shardId = apiGuild.shard_id;
 		this.name = apiGuild.name;
 		this.icon = apiGuild.icon;
 		this.ownerID = apiGuild.owner_id;

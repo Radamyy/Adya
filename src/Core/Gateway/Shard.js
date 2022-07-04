@@ -115,8 +115,8 @@ module.exports = class Shard extends EventEmitter {
 			this.emit('shardPreReady', this.id, d._trace);
 			break;
 		case GatewayDispatchEvents.GuildCreate:
+			if (!this.unavailableGuilds.includes(d.id)) this.emit('guildCreate', d, this.id);
 			this.cacheGuild(d);
-			this.emit('guildCreate', d, this.id);
 			break;
 		case GatewayDispatchEvents.GuildUpdate:
 			this.emit('guildUpdate', d, this.id);
@@ -148,6 +148,7 @@ module.exports = class Shard extends EventEmitter {
 	}
 
 	checkReady () {
+		if (this.ready) return;
 		if (!this.unavailableGuilds.length) {
 			this.status = 'ready';
 			this.ready = true;
@@ -273,6 +274,7 @@ module.exports = class Shard extends EventEmitter {
 	}
 
 	cacheGuild(guild) {
+		guild['shard_id'] = this.id;
 		this._client.guilds.add(guild, this._client, true);
 		this.unavailableGuilds = this.unavailableGuilds.filter(g => g!== guild.id);
 		this.checkReady();
