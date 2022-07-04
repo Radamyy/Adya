@@ -10,6 +10,7 @@ module.exports = class Shard extends EventEmitter {
 		this.connectionTimeout = 3e5;
 		this.status = 'disconnected';
 		this.preReady = false;
+		this.ready = false;
 		this.heartbeatInterval = 0;
 
 		this.unavailableGuilds = [];
@@ -102,7 +103,6 @@ module.exports = class Shard extends EventEmitter {
 	}
 
 	wsEvent({ d, t }) {
-		if (!this._client.options.events.includes(t)) return;
 		switch (t) {
 		case GatewayDispatchEvents.Ready:
 			this.preReady = true;
@@ -145,7 +145,8 @@ module.exports = class Shard extends EventEmitter {
 	checkReady () {
 		if (!this.unavailableGuilds.length) {
 			this.status = 'ready';
-			this.emit('ready', this.id);
+			this.ready = true;
+			this.emit('shardReady', this.id);
 		}
 
 	}
@@ -160,7 +161,7 @@ module.exports = class Shard extends EventEmitter {
 		}
 		switch (op) {
 		case GatewayOpcodes.Dispatch: {
-			this.wsEvent({ s, d, t, op });
+			if (this._client.options.events.includes(t)) this.wsEvent({ s, d, t, op });
 			break;
 		}
 		case GatewayOpcodes.Heartbeat: {

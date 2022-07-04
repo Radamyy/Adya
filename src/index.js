@@ -7,8 +7,8 @@ const config = require('dotenv').config().parsed;
 const client = new Client({
 	token: config.TOKEN,
 	firstShardId: 0,
-	lastShardId: 0,
-	shardCount: 1,
+	lastShardId: 1,
+	shardCount: 2,
 	autoreconnect: true,
 	presence: {
 		activities: [
@@ -43,11 +43,11 @@ const client = new Client({
 client.login();
 
 client.on('ready', () => {
-	console.log(client.guilds.size);
-	/*
+	console.log(`Load total of ${client.guilds.size} guilds in cache`);
+
 	client.createMessage('992905327039234128', {
 		content: 'bip bop'
 	}).catch(console.error);
 
-	 */
+
 });

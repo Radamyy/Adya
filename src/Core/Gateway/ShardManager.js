@@ -9,7 +9,7 @@ module.exports = class ShardManager extends Map {
 	}
 
 	add(shard) {
-		this.set(this.values().length ? this.values().length + 1 : 0, shard);
+		this.set(shard.id, shard);
 		return shard;
 	}
 	connect(shard) {
@@ -22,8 +22,7 @@ module.exports = class ShardManager extends Map {
 		if (!shard) {
 			shard = this.add(new Shard(id, this._client));
 			shard
-				.on('ready', () => {
-					this._client.emit('shardReady', shard.id);
+				.on('shardReady', () => {
 					if (this._client.ready) {
 						return;
 					}
@@ -34,7 +33,6 @@ module.exports = class ShardManager extends Map {
 					}
 					this._client.ready = true;
 					this._client.startTime = Date.now();
-
 					this._client.emit('ready');
 				})
 				.on('resume', () => {
