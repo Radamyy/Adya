@@ -13,7 +13,7 @@ module.exports = class Collection extends Map {
 	}
 
 	add (object, extra, replace = false) {
-		if (!object.id) throw new Error('Object need id');
+		if (!object.id && object.id !== 0) throw new Error('Object need id');
 
 		const existingObject = this.get(object.id);
 		if (existingObject && !replace) {
