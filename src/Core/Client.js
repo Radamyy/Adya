@@ -7,7 +7,7 @@ const Guild = require('./Classes/Guild');
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-class Client extends EventEmitter {
+module.exports = class Client extends EventEmitter {
 	constructor(options) {
 		super();
 		this.options = options;
@@ -29,7 +29,7 @@ class Client extends EventEmitter {
 				this.shards.spawn(i);
 			}
 		} catch (err) {
-			if (!this.options.autoreconnect) {
+			if (!this.options.autoReconnect) {
 				throw err;
 			}
 			const reconnectDelay = this.options.reconnectDelay(
@@ -69,6 +69,4 @@ class Client extends EventEmitter {
 			await this.shards.get(id).setActivity(activity);
 		}
 	}
-}
-
-module.exports = { Client };
+};
