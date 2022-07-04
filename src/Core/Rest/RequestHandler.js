@@ -14,11 +14,22 @@ module.exports = class RequestHandler {
 	}
 
 	async request(method, url, data, headers) {
-		return await this.axios.request({
-			url,
-			method: method.toLowerCase(),
-			data,
-			headers,
+		return new Promise((res, rej) => {
+			this.axios
+				.request({
+					url,
+					method: method.toLowerCase(),
+					data,
+					headers,
+				})
+				.then(({ data }) => res(data))
+				.catch((e) => {
+					if (e.response.status != 429) return rej(e.response);
+
+					const cooldown = e.response.data.retry_after;
+
+					setTimeout(() => this.request(method, url, data, headers), cooldown * 1000);
+				});
 		});
 	}
 };

@@ -157,7 +157,6 @@ module.exports = class Shard extends EventEmitter {
 	}
 
 	onPacket({ s, d, t, op }) {
-		console.log(t, op);
 		if (s) {
 			if (s > this.seq + 1 && this.ws && this.status !== 'resuming') {
 				this.emit('warn', `Non-consecutive sequence (${this.seq} -> ${s})`, this.id);

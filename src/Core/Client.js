@@ -22,10 +22,9 @@ class Client extends EventEmitter {
 	async login() {
 		try {
 			const gateway = await this.getGateway();
-			//console.log(gateway);
 			if (!this.options.shardCount) this.options.shardCount = gateway.shards;
 			if (!this.options.firstShardId) this.options.firstShardId = 0;
-			if (!this.options.lastShardId) this.options.lastShardId = gateway.shards-1;
+			if (!this.options.lastShardId) this.options.lastShardId = gateway.shards - 1;
 			for (let i = this.options.firstShardId; i <= this.options.lastShardId; ++i) {
 				this.shards.spawn(i);
 			}
@@ -44,17 +43,12 @@ class Client extends EventEmitter {
 		}
 	}
 
-	getGateway () {
-		return new Promise((res, rej) => {
-			this.rest.request('GET', Routes.gatewayBot()).then(r => res(r.data)).catch(rej);
-		});
+	async getGateway() {
+		return await this.rest.request('GET', Routes.gatewayBot());
 	}
 
-	createMessage(channelId, content) {
-		return new Promise((res, rej) => {
-			if (!content) rej('Provide message content');
-			this.rest.request('POST', Routes.channelMessages(channelId), content ).then(r => res(r.data)).catch(rej);
-		});
+	async createMessage(channelId, content) {
+		return await this.rest.request('POST', Routes.channelMessages(channelId), content);
 	}
 
 	async deleteMessage(channelId, messageId) {
@@ -69,15 +63,12 @@ class Client extends EventEmitter {
 		);
 	}
 
-
-	async setActivity (activity, shards) {
-		if (!shards ) shards = this.shards.map((shard) => shard.id);
+	async setActivity(activity, shards) {
+		if (!shards) shards = this.shards.map((shard) => shard.id);
 		for (const id of shards) {
 			await this.shards.get(id).setActivity(activity);
 		}
 	}
-
-
 }
 
 module.exports = { Client };

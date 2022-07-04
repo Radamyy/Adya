@@ -43,29 +43,34 @@ const client = new Client({
 	]
 });
 
-client.login();
 
 client.on('ready', () => {
-	console.log(`Load total of ${client.guilds.size} guilds in cache`);
+	console.log(`[CLIENT] The bot is running on ${client.guilds.size} servers.`);
 
-	client.setActivity({
-		activities: [
+	client
+		.setActivity(
 			{
-				name: 'Adya-core',
-				type: 0,
+				activities: [
+					{
+						name: 'Prodige',
+						type: 0,
+					},
+				],
+				status: 'dnd',
+				since: 91879201,
+				afk: false,
 			},
-		],
-		status: 'dnd',
-		since: 91879201,
-		afk: false,
-	}, [0, 1]).catch(console.error);
-
-	/*
-	client.createMessage('992905327039234128', {
-		content: 'bip bop'
-	}).catch(console.error);//.then(console.log);
-
-	 */
-
-
+			[0, 1]
+		)
+		.catch(console.error);
 });
+
+client.on('shardReady', (id) => {
+	console.log(`[SHARD] Shard(${id}) is now ready.`);
+});
+
+client.on('messageCreate', (m) => {
+	client.createMessage(m.channel_id, { content: 'Hello' });
+});
+
+client.login();
