@@ -1,16 +1,12 @@
 const Shard = require('./Shard');
+const Collection = require('../Utils/Collection');
 
-module.exports = class ShardManager extends Map {
+module.exports = class ShardManager extends Collection {
 	constructor(client) {
-		super();
+		super(Shard);
 		this._client = client;
 		this.connectQueue = [];
 		this.connectTimeout = null;
-	}
-
-	add(shard) {
-		this.set(shard.id, shard);
-		return shard;
 	}
 	connect(shard) {
 		this.connectQueue.push(shard);
