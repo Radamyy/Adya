@@ -24,7 +24,7 @@ module.exports = class RequestHandler {
 				})
 				.then(({ data }) => res(data))
 				.catch((e) => {
-					if (e.response.status != 429) return rej(e.response);
+					if (e.response.status !== 429) return rej(e.response);
 
 					const cooldown = e.response.data.retry_after;
 
