@@ -20,7 +20,7 @@
 ><summary>Core-REST</summary>
 >
 >>- [X] Request Handler
->>- [ ] RateLimits Manager
+>>- [X] RateLimits Manager
 >></details>
 
 ><details open>
