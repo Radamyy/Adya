@@ -6,9 +6,10 @@ const config = require('dotenv').config().parsed;
 
 const client = new Client({
 	token: config.TOKEN,
+	isEnvDev: config.IS_ENV_DEV,
 	firstShardId: 0,
-	lastShardId: 1,
-	shardCount: 2,
+	lastShardId: 0,
+	shardCount: 1,
 	autoReconnect: true,
 	intents: [Guilds, GuildMembers, MessageContent, GuildMessages],
 	events: [
@@ -25,11 +26,12 @@ const client = new Client({
 	],
 });
 
-//client.on('shardPreReady', (id) => console.log(`[SHARD] Shard ${id} is starting`));
-client.on('shardReady', (id) => console.log(`[SHARD] Shard ${id} is ready`));
+//client.on('shardPreReady', (id) => console.log(`[SHARD] Shard(${id}) is starting`));
+client.on('shardReady', (id) => console.log(`[SHARD] Shard(${id}) is ready`));
 
 client.on('ready', (client) => {
 	console.log(`[CLIENT] The bot is running on ${client.guilds.size} servers.`);
+
 	client.setActivity({
 		activities: [
 			{

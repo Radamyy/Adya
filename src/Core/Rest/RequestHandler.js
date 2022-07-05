@@ -13,7 +13,7 @@ module.exports = class RequestHandler {
 		});
 	}
 
-	async request(method, url, data, headers) {
+	async request(method, url, data, headers, messageIfRateLimited) {
 		return new Promise((res, rej) => {
 			this.axios
 				.request({
@@ -28,7 +28,18 @@ module.exports = class RequestHandler {
 
 					const cooldown = e.response.data.retry_after;
 
-					setTimeout(() => this.request(method, url, data, headers), cooldown * 1000);
+					if (messageIfRateLimited) {
+						const message = messageIfRateLimited.replace('TIME', `${cooldown}s`);
+						console.log(message);
+					}
+
+					setTimeout(
+						() =>
+							this.request(method, url, data, headers)
+								.then(res)
+								.catch((e) => rej(e)),
+						cooldown * 1000
+					);
 				});
 		});
 	}

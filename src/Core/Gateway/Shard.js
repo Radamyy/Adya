@@ -110,8 +110,12 @@ module.exports = class Shard extends EventEmitter {
 	wsEvent({ d, t }) {
 		switch (t) {
 		case GatewayDispatchEvents.Ready:
+			//Setting the bot id if it's still null
+			if (!this._client.id) this._client.id = d?.user?.id;
 			this.preReady = true;
-			this.unavailableGuilds = d.guilds.filter(g => g.unavailable === true).map(g => g.id);
+			this.unavailableGuilds = d.guilds
+				.filter((g) => g.unavailable === true)
+				.map((g) => g.id);
 			this.emit('shardPreReady', this.id, d._trace);
 			break;
 		case GatewayDispatchEvents.GuildCreate:

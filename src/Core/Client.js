@@ -10,13 +10,16 @@ const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 module.exports = class Client extends EventEmitter {
 	constructor(options) {
 		super();
+		this.id = null;
 		this.options = options;
 		this._token = options.token;
+		this.isEnvDev = options.isEnvDev === 'TRUE' ? true : false;
 		this.options.reconnectDelay = (lastDelay, attempts) =>
 			Math.pow(attempts + 1, 0.7) * 20000;
 		this.shards = new ShardManager(this);
 		this.rest = new Rest(this._token);
 		this.guilds = new Collection(Guild);
+		this.commands = new Collection();
 	}
 
 	async login() {
@@ -68,5 +71,15 @@ module.exports = class Client extends EventEmitter {
 		for (const id of shards) {
 			await this.shards.get(id).setActivity(activity);
 		}
+	}
+
+	async registerAllCommands(unloadedCommands, applicationId) {
+		return await this.rest.request(
+			'PUT',
+			Routes.applicationCommands(applicationId),
+			unloadedCommands,
+			{},
+			'[API] Your commands will be registerd in TIME due to the rate limit imposed by Discord.'
+		);
 	}
 };
