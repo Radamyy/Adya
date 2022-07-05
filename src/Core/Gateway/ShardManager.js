@@ -29,7 +29,7 @@ module.exports = class ShardManager extends Collection {
 					}
 					this._client.ready = true;
 					this._client.startTime = Date.now();
-					this._client.emit('ready');
+					this._client.emit('ready', this._client);
 				})
 				.on('resume', () => {
 					this._client.emit('shardResume', shard.id);
@@ -43,7 +43,7 @@ module.exports = class ShardManager extends Collection {
 					}
 					this._client.ready = true;
 					this._client.startTime = Date.now();
-					this._client.emit('ready');
+					this._client.emit('ready', this._client);
 				})
 				.on('disconnect', (error) => {
 					this._client.emit('shardDisconnect', error, shard.id);
