@@ -1,7 +1,18 @@
 const { GatewayIntentBits, GatewayDispatchEvents } = require('discord-api-types/v10');
-const Client = require('./Bot/Classes/Client');
 const { Guilds, GuildMembers, MessageContent, GuildMessages } = GatewayIntentBits;
-const { Ready, GuildCreate, GuildDelete, MessageCreate, GuildUpdate, InteractionCreate, MessageReactionAdd, MessageReactionRemove, PresenceUpdate, VoiceStateUpdate } = GatewayDispatchEvents;
+const {
+	Ready,
+	GuildCreate,
+	GuildDelete,
+	MessageCreate,
+	GuildUpdate,
+	InteractionCreate,
+	MessageReactionAdd,
+	MessageReactionRemove,
+	PresenceUpdate,
+	VoiceStateUpdate,
+} = GatewayDispatchEvents;
+const Client = require('./Bot/Classes/Client');
 const config = require('dotenv').config().parsed;
 
 const client = new Client({

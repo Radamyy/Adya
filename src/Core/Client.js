@@ -24,7 +24,16 @@ module.exports = class Client extends EventEmitter {
 
 	async login() {
 		try {
-			const gateway = await this.getGateway();
+			const gateway = await this.getGateway().catch((err) => {
+				if (err.status === 401) {
+					console.log(
+						'[CLIENT] The bot token is probably wrong, please try with another token.'
+					);
+				}
+			});
+
+			if (!gateway) return;
+
 			if (!this.options.shardCount) this.options.shardCount = gateway.shards;
 			if (!this.options.firstShardId) this.options.firstShardId = 0;
 			if (!this.options.lastShardId) this.options.lastShardId = gateway.shards - 1;
@@ -32,6 +41,7 @@ module.exports = class Client extends EventEmitter {
 				this.shards.spawn(i);
 			}
 		} catch (err) {
+			console.log(err);
 			if (!this.options.autoReconnect) {
 				throw err;
 			}
